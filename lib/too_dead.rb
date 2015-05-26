@@ -28,8 +28,17 @@ module TooDead
     end
 
     def confirm?(message)
-      choice = prompt("#{message} (y/n)") { |input| input == /^[yn]$/i }
+      choice = prompt("#{message} (y/n)") { |input| input =~ /^[yn]$/i }
       choice.upcase == 'Y'
+    end
+
+    def home_screen
+      choice = prompt("Would you like to login or exit?") { |input| input =~ /^login|exit$/ }
+      if choice == 'login'
+        register
+      else
+        exit
+      end
     end
 
     def register
@@ -79,7 +88,30 @@ module TooDead
       TodoItem.find(todo_id)
     end
 
-    def work_on_list
+    def work_on_lists
+      puts @user
+      message = "\n\nPlease choose one of the following options:
+                   L) Logout and pick a different user or exit.
+                   Q) Delete your account and quit forever.
+                   P) Pick an existing Todo list to work on.
+                   N) Create a new Todo list.
+                   D) Delete an existing Todo list."
+      choice = prompt(message) { |input| input =~ /^[lpnd]$/i }.downcase
+      case choice
+      when 'l'
+        @user = nil
+      when 'q'
+        unregister
+      when 'p'
+        pick_list
+      when 'n'
+        new_list
+      when 'd'
+        delete_list
+      end
+    end
+
+    def work_on_items
       puts @todo_list
       message = "\n\nPlease choose one of the following options:
                    B) Go Back and pick a different Todo list.
@@ -132,13 +164,24 @@ module TooDead
 
     def toggle_completion(todo)
       todo.toggle!
-      puts "#{todo} is now #{todo.finished? : 'done!' ? 'ready for work!' }"
+      puts "#{todo} is now #{todo.finished? ? 'done!' : 'ready for work!'}"
     end
 
     def run
+      while true
+        if @todo_list
+          work_on_items
+        elsif @user
+          work_on_lists
+        else
+          home_screen
+        end
+      end
     end
   end
 end
+
+binding.pry
 
 # app = Menu.new
 # app.run
